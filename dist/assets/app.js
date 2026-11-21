@@ -4,10 +4,65 @@ const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'
 const normalize=s=>String(s).replace(/[يى]/g,'ی').replace(/ك/g,'ک').replace(/[\u200c\u200d]/g,' ').toLowerCase();
 let selections=[];try{selections=JSON.parse(localStorage.getItem('chireh-compare')||'[]').filter(id=>PRODUCTS.some(p=>p.id===id)).slice(0,3)}catch{}
 let toastTimer;function toast(t){const e=$('.toast');e.textContent=t;e.classList.add('visible');clearTimeout(toastTimer);toastTimer=setTimeout(()=>e.classList.remove('visible'),3200)}
-const menu=$('.menu-toggle'),mobile=$('.mobile-nav');function closeMenu(){document.body.classList.remove('menu-open');mobile.inert=true;menu.setAttribute('aria-expanded','false');menu.setAttribute('aria-label','باز کردن منو')}
-menu.addEventListener('click',()=>{let opened=document.body.classList.toggle('menu-open');mobile.inert=!opened;if(opened)mobile.style.top=document.querySelector('header').getBoundingClientRect().bottom+'px';menu.setAttribute('aria-expanded',String(opened));menu.setAttribute('aria-label',opened?'بستن منو':'باز کردن منو')});
+const menu=$('.menu-toggle'),mobile=$('.mobile-nav');const menuIcon=open=>open?'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>';function closeMenu(){document.body.classList.remove('menu-open');mobile.inert=true;menu.classList.remove('is-open');menu.innerHTML=menuIcon(false);menu.setAttribute('aria-expanded','false');menu.setAttribute('aria-label','باز کردن منو')}
+menu.addEventListener('click',()=>{let opened=document.body.classList.toggle('menu-open');mobile.inert=!opened;if(opened)mobile.style.top=document.querySelector('header').getBoundingClientRect().bottom+'px';menu.classList.toggle('is-open',opened);menu.innerHTML=menuIcon(opened);menu.setAttribute('aria-expanded',String(opened));menu.setAttribute('aria-label',opened?'بستن منو':'باز کردن منو')});
 window.addEventListener('resize',()=>{if(innerWidth>1000)closeMenu()});
-const mt=$('#mega-toggle'),mp=$('.mega-parent');mt.addEventListener('click',()=>{const o=mp.classList.toggle('open');mt.setAttribute('aria-expanded',String(o))});document.addEventListener('click',e=>{if(!mp.contains(e.target)){mp.classList.remove('open');mt.setAttribute('aria-expanded','false')}});
+const mt=$('#mega-toggle'),mp=$('.mega-parent');
+function prepareMegaMenus(){
+ if(mega&&$('.mega-intro')&&$('.mega-links')&&!mega.querySelector('.mega-products')){
+  mega.classList.add('mega-enhanced');
+  mt.setAttribute('aria-controls','mega-panel');
+  mega.id='mega-panel';
+  const intro=$('.mega-intro',mega);
+  const metrics=document.createElement('div');
+  metrics.className='mega-metrics';
+  metrics.innerHTML='<span><b>'+fa(PRODUCTS.length)+'</b><small>مدل تجهیز</small></span><span><b>'+fa($('.mega-links a',mega).length)+'</b><small>گروه محصول</small></span>';
+  intro.appendChild(metrics);
+  const aliases={'cjc-200':'سنگ‌شکن فکی','crp-600':'آسیاب رینگی پنوماتیکی','cspi':'آزمون آسیاشوندگی'};
+  const featured=['cjc-200','crp-600','cspi'].map(id=>PRODUCTS.find(p=>p.id===id)).filter(Boolean);
+  const shelf=document.createElement('aside');
+  shelf.className='mega-products';
+  shelf.innerHTML='<div class="mega-products-head"><span>دستگاه‌های منتخب</span><a href="/products/">همه دستگاه‌ها</a></div>'+featured.map(p=>'<a class="mega-product-card" href="/products/'+esc(p.id)+'/"><span class="mega-product-thumb"><img src="'+esc(p.image)+'" alt="" loading="lazy"></span><span class="mega-product-copy"><small dir="ltr">'+esc(p.model)+'</small><b>'+esc(aliases[p.id]||p.name)+'</b></span><i aria-hidden="true">↖</i></a>').join('');
+  mega.appendChild(shelf);
+  const foot=document.createElement('div');
+  foot.className='mega-foot';
+  foot.innerHTML='<span><b>راهنمای انتخاب تجهیزات</b><small>براساس نوع نمونه، ظرفیت و دانه‌بندی هدف</small></span><a href="/quote/">مشاوره با کارشناس <i aria-hidden="true">↖</i></a>';
+  mega.appendChild(foot);
+ }
+ if(mobile&&!mobile.querySelector('.mobile-menu-inner')){
+  const original=Array.from(mobile.querySelectorAll(':scope > a'));
+  const source=path=>original.find(a=>a.pathname===path);
+  const copyLink=(path,className)=>{
+   const a=source(path);
+   if(!a)return '';
+   const clone=a.cloneNode(true);
+   if(className)clone.classList.add(className);
+   return clone.outerHTML;
+  };
+  const topic=item=>'<a class="mobile-menu-topic" href="'+esc(item[0])+'"><span><b>'+esc(item[1])+'</b><small>'+esc(item[2])+'</small></span><i aria-hidden="true">↖</i></a>';
+  const categories=$('.mega-links > a').map(a=>{const clone=a.cloneNode(true);clone.classList.add('mobile-category-card');return clone.outerHTML}).join('');
+  const solutions=[
+   ['/solutions/','همه راهکارها','مرور مسیرهای تجهیز آزمایشگاه'],
+   ['/solutions/sample-lab/','آزمایشگاه آماده‌سازی نمونه','از خردایش اولیه تا تقسیم نمونه'],
+   ['/solutions/grindability/','مطالعات آسیاشوندگی','بررسی رفتار نمونه در آسیاکنی'],
+   ['/solutions/gravity/','آزمایشگاه جدایش ثقلی','ارزیابی تجهیزات و آزمون‌های ثقلی'],
+   ['/solutions/flotation/','مطالعات فلوتاسیون','آماده‌سازی برای بررسی فرآیند']
+  ].map(topic).join('');
+  const articles=[
+   ['/knowledge/','همه مطالب دانشنامه','راهنماها و نکته‌های فنی'],
+   ['/knowledge/choose-mill/','راهنمای انتخاب آسیاب آزمایشگاهی','انتخاب مدل براساس هدف آزمون'],
+   ['/knowledge/crusher-guide/','پیش از خرید سنگ‌شکن فکی چه بپرسیم؟','نکات مهم در انتخاب سنگ‌شکن'],
+   ['/knowledge/cspi-guide/','آزمون آسیاشوندگی با دستگاه CSPI','آشنایی با مسیر انجام آزمون'],
+   ['/knowledge/gravity-guide/','میز لرزان یا تغلیظ‌کننده گریز از مرکز؟','مقایسه دو روش جدایش ثقلی'],
+   ['/knowledge/maintenance/','چک‌لیست نگهداری تجهیزات آزمایشگاه','بازبینی‌های دوره‌ای دستگاه‌ها'],
+   ['/knowledge/sample-preparation/','خطاهای رایج در آماده‌سازی نمونه','کاهش خطا پیش از آزمون']
+  ].map(topic).join('');
+  const quick=[['/services/','mobile-menu-quick'],['/projects/','mobile-menu-quick'],['/catalog/','mobile-menu-quick'],['/about/','mobile-menu-quick'],['/contact/','mobile-menu-quick']].map(x=>copyLink(x[0],x[1])).join('');
+  mobile.innerHTML='<div class="mobile-menu-inner"><div class="mobile-menu-top"><span><i></i><i></i><i></i> چیره فرآور گستر</span>'+copyLink('/','mobile-menu-home')+'</div><div class="mobile-menu-intro"><span>دسترسی سریع</span><h2>مسیر مناسب را پیدا کنید</h2><p>تجهیزات، راهکارها و دانش فنی در یک منو.</p></div><button type="button" class="mobile-menu-search search-open" aria-label="جست‌وجو در تجهیزات"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></svg><span><b>جست‌وجوی تجهیزات</b><small>نام دستگاه، مدل یا کاربرد</small></span><i aria-hidden="true">⌕</i></button><div class="mobile-menu-groups"><details class="mobile-menu-group mobile-menu-products" open><summary><span><b>تجهیزات و محصولات</b><small>دسته‌بندی و مدل‌های دستگاه</small></span><i aria-hidden="true">+</i></summary><div class="mobile-menu-categories">'+categories+'</div><a class="mobile-menu-all" href="/products/">مشاهده همه محصولات <i aria-hidden="true">↖</i></a></details><details class="mobile-menu-group"><summary><span><b>راهکارهای فرآوری</b><small>انتخاب مسیر متناسب با آزمون</small></span><i aria-hidden="true">+</i></summary><div class="mobile-menu-topics">'+solutions+'</div></details><details class="mobile-menu-group"><summary><span><b>دانشنامه فنی</b><small>راهنماها و مطالب کاربردی</small></span><i aria-hidden="true">+</i></summary><div class="mobile-menu-topics">'+articles+'</div></details></div><div class="mobile-menu-quicklinks">'+quick+'</div><div class="mobile-menu-actions">'+copyLink('/quote/','mobile-menu-quote')+'<a class="mobile-menu-phone" href="tel:02155448318"><span>تماس مستقیم با چیره</span><b dir="ltr">۰۲۱ ـ ۵۵۴۴۸۳۱۸</b></a></div><p class="mobile-menu-note">مهندسی فرآوری، از نمونه تا نتیجه</p></div>';
+ }
+}
+prepareMegaMenus();
+mt.addEventListener('click',()=>{const o=mp.classList.toggle('open');mt.setAttribute('aria-expanded',String(o))});mp.addEventListener('mouseenter',()=>mt.setAttribute('aria-expanded','true'));mp.addEventListener('mouseleave',()=>{if(!mp.classList.contains('open'))mt.setAttribute('aria-expanded','false')});mp.addEventListener('focusin',()=>mt.setAttribute('aria-expanded','true'));mp.addEventListener('focusout',e=>{if(!mp.contains(e.relatedTarget)&&!mp.classList.contains('open'))mt.setAttribute('aria-expanded','false')});document.addEventListener('click',e=>{if(!mp.contains(e.target)){mp.classList.remove('open');mt.setAttribute('aria-expanded','false')}});
 $$('.nav nav>a').forEach(a=>{const path=new URL(a.href).pathname;if((path==='/'&&location.pathname==='/')||(path!=='/'&&location.pathname.startsWith(path))){a.classList.add('active');a.setAttribute('aria-current','page')}});
 const sd=$('#search-dialog');$$('.search-open').forEach(b=>b.onclick=()=>{closeMenu();sd.showModal();setTimeout(()=>$('#global-search').focus(),20)});$('.search-close').onclick=()=>sd.close();sd.addEventListener('click',e=>{if(e.target===sd){const r=sd.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)sd.close()}});
 $('#global-search').addEventListener('input',e=>{const q=normalize(e.target.value.trim());const matches=q?PRODUCTS.filter(p=>normalize(p.name+' '+p.model+' '+CATEGORIES[p.cat][0]).includes(q)):[];$('#search-results').innerHTML=q?(matches.length?matches.slice(0,12).map(p=>`<a href="/products/${p.id}/"><img src="${p.image}" alt=""><span><b>${esc(p.name)}</b><small>${p.model}</small></span></a>`).join(''):'<p>دستگاهی پیدا نشد. عبارت دیگری را امتحان کنید یا <a href="/quote/">مشاوره بگیرید.</a></p>'):'<p>نام دستگاه یا مدل موردنظرتان را بنویسید.</p>'});
