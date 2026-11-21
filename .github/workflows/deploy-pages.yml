@@ -49,6 +49,12 @@ jobs:
               text = path.read_text(encoding="utf-8")
               text = quote_root.sub(lambda match: match.group(1) + site_base + "/", text)
               text = css_root.sub(lambda match: "url(" + match.group(1) + site_base + "/", text)
+              if path.suffix.lower() == ".html":
+                  site_version = os.environ.get("GITHUB_SHA", "latest")[:12]
+                  for asset in ("style.css", "app.js"):
+                      asset_url = site_base + "/assets/" + asset
+                      text = text.replace(asset_url + '"', asset_url + "?v=" + site_version + '"')
+                      text = text.replace(asset_url + "'", asset_url + "?v=" + site_version + "'")
               path.write_text(text, encoding="utf-8")
 
           Path("dist/.nojekyll").touch()
