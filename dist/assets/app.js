@@ -82,5 +82,33 @@ const form=$('#quote-form');if(form){const params=new URLSearchParams(location.s
 function text(){const d=new FormData(form),p=PRODUCTS.find(p=>p.id===d.get('product'));return 'درخواست مشاوره و پیش‌فاکتور\n\n'+[['نام و نام خانوادگی',d.get('name')],['شرکت',d.get('company')],['شماره تماس',d.get('phone')],['ایمیل',d.get('email')],['دستگاه',p?p.name:'نیازمند مشاوره در انتخاب'],['نوع نمونه',d.get('material')],['ظرفیت / تعداد نمونه',d.get('capacity')],['ابعاد خوراک',d.get('feed')],['دانه‌بندی هدف',d.get('output')],['شرح درخواست',d.get('message')]].filter(x=>x[1]).map(x=>x[0]+': '+x[1]).join('\n')}
 function result(t){$('#quote-result').hidden=false;$('#quote-result textarea').value=t}
 form.addEventListener('submit',e=>{e.preventDefault();if(!form.reportValidity())return;const t=text();result(t);const a=document.createElement('a');a.href='mailto:sales@chirehfg.com?subject='+encodeURIComponent('درخواست مشاوره و پیش‌فاکتور تجهیزات')+'&body='+encodeURIComponent(t);a.click();toast('متن درخواست آماده شد؛ ارسال را در برنامه ایمیل تأیید کنید.');$('#quote-result').scrollIntoView({behavior:'smooth',block:'center'})});$('#download-quote').onclick=()=>{if(!form.reportValidity())return;const t=text();result(t);const url=URL.createObjectURL(new Blob(['\ufeff'+t],{type:'text/plain;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download='chireh-quote-request.txt';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);toast('متن درخواست دانلود شد.')};$('#copy-quote').onclick=async()=>{try{await navigator.clipboard.writeText($('#quote-result textarea').value);toast('متن درخواست کپی شد.')}catch{$('#quote-result textarea').select();document.execCommand('copy');toast('متن درخواست انتخاب شد.')}}}
+
+function enhanceFooter(){
+ const footer=$('footer');
+ const grid=footer&&$('.footer-grid',footer);
+ if(!footer||!grid||footer.classList.contains('footer-enhanced'))return;
+ footer.classList.add('footer-enhanced');
+ const cta=document.createElement('div');
+ cta.className='wrap footer-cta';
+ cta.innerHTML='<div class="footer-cta-copy"><span class="footer-kicker">همراه فنی چیره</span><h2>برای انتخاب دستگاه، از نیاز آزمایشگاه شروع کنیم.</h2><p>نوع نمونه، ظرفیت و هدف آزمون را بگویید تا تجهیزات متناسب را بررسی کنیم.</p></div><div class="footer-cta-actions"><a class="btn primary" href="/quote/">درخواست مشاوره فنی <i aria-hidden="true">↖</i></a><a class="footer-cta-secondary" href="/products/">مرور تجهیزات <i aria-hidden="true">↖</i></a></div>';
+ footer.insertBefore(cta,grid);
+ const columns=Array.from(grid.children).slice(1);
+ const descriptions=['صفحات شرکت و ارتباط','گروه‌های اصلی دستگاه‌ها','راهنماها و ابزارهای انتخاب'];
+ const mobileNav=document.createElement('nav');
+ mobileNav.className='wrap footer-mobile-links';
+ mobileNav.setAttribute('aria-label','پیوندهای بخش‌های سایت');
+ mobileNav.innerHTML=columns.map((column,index)=>{
+  const title=column.querySelector('h3');
+  const links=Array.from(column.querySelectorAll(':scope > a')).map(a=>{const clone=a.cloneNode(true);clone.classList.add('footer-mobile-link');return clone.outerHTML}).join('');
+  return '<details class="footer-mobile-group"><summary><span><b>'+esc(title?title.textContent.trim():'پیوندهای سایت')+'</b><small>'+descriptions[index]+'</small></span><i aria-hidden="true">+</i></summary><div class="footer-mobile-link-list">'+links+'</div></details>';
+ }).join('');
+ const bottom=$('.footer-bottom',footer);
+ if(bottom)footer.insertBefore(mobileNav,bottom);else footer.appendChild(mobileNav);
+ const mobileQuote=$('.mobile-quote');
+ if(mobileQuote&&'IntersectionObserver'in window){
+  new IntersectionObserver(entries=>document.body.classList.toggle('footer-visible',entries[0].isIntersecting),{threshold:.03}).observe(footer);
+ }
+}
+enhanceFooter();
 const imageDialog=$('#image-dialog');if(imageDialog){$('.zoom-product').onclick=()=>imageDialog.showModal();$('.image-close').onclick=()=>imageDialog.close()}
 })();
