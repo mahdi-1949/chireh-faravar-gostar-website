@@ -7,7 +7,7 @@ let toastTimer;function toast(t){const e=$('.toast');e.textContent=t;e.classList
 const menu=$('.menu-toggle'),mobile=$('.mobile-nav');const menuIcon=open=>open?'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>';function closeMenu(){document.body.classList.remove('menu-open');mobile.inert=true;menu.classList.remove('is-open');menu.innerHTML=menuIcon(false);menu.setAttribute('aria-expanded','false');menu.setAttribute('aria-label','باز کردن منو')}
 menu.addEventListener('click',()=>{let opened=document.body.classList.toggle('menu-open');mobile.inert=!opened;if(opened)mobile.style.top=document.querySelector('header').getBoundingClientRect().bottom+'px';menu.classList.toggle('is-open',opened);menu.innerHTML=menuIcon(opened);menu.setAttribute('aria-expanded',String(opened));menu.setAttribute('aria-label',opened?'بستن منو':'باز کردن منو')});
 window.addEventListener('resize',()=>{if(innerWidth>1000)closeMenu()});
-const mt=$('#mega-toggle'),mp=$('.mega-parent');
+const mt=$('#mega-toggle'),mp=$('.mega-parent'),mega=$('.mega');
 function prepareMegaMenus(){
  if(mega&&$('.mega-intro')&&$('.mega-links')&&!mega.querySelector('.mega-products')){
   mega.classList.add('mega-enhanced');
