@@ -40,7 +40,7 @@ function prepareMegaMenus(){
    return clone.outerHTML;
   };
   const topic=item=>'<a class="mobile-menu-topic" href="'+esc(item[0])+'"><span><b>'+esc(item[1])+'</b><small>'+esc(item[2])+'</small></span><i aria-hidden="true">↖</i></a>';
-  const categories=$('.mega-links > a').map(a=>{const clone=a.cloneNode(true);clone.classList.add('mobile-category-card');return clone.outerHTML}).join('');
+  const categories=$$('.mega-links > a').map(a=>{const clone=a.cloneNode(true);clone.classList.add('mobile-category-card');return clone.outerHTML}).join('');
   const solutions=[
    ['/solutions/','همه راهکارها','مرور مسیرهای تجهیز آزمایشگاه'],
    ['/solutions/sample-lab/','آزمایشگاه آماده‌سازی نمونه','از خردایش اولیه تا تقسیم نمونه'],
